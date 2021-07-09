@@ -23,5 +23,5 @@
 hs_err_pid*
 
 # Idea directories
-src
-.idea
+/src/
+/.idea/
