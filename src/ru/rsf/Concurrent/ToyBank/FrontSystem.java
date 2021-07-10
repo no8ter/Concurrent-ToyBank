@@ -22,23 +22,35 @@ public class FrontSystem {
 
     // Два условия для отдельной блокировки клиентов и менеджеров
     private static final Lock lock = new ReentrantLock();
-    private static final Condition inputCodition = lock.newCondition();
-    private static final Condition outputCondition = lock.newCondition();
+    private static final Condition cond = lock.newCondition();
 
-    public static Lock getLock() { return lock; }
-    public static Condition getInputCodition() { return inputCodition; }
-    public static Condition getOutputCondition() { return outputCondition; }
-
-    public void putInQueue(Task newTask) throws InterruptedException{
-        queue.put(newTask);
-        inputCodition.signalAll();
+    public void putInQueue(Task newTask){
+        lock.lock();
+        try {
+            while (queue.size() >= 2) {
+                cond.await();
+            }
+            queue.put(newTask);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            lock.unlock();
+        }
     }
 
-    public Task pullFromQueue() throws InterruptedException{
+    public Task pullFromQueue(){
+        lock.lock();
         try {
-            return queue.take();
+            while (queue.size() < 1) {
+                cond.await();
+            }
+            return queue.poll();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            return null;
         } finally {
-            outputCondition.signalAll();
+            cond.signalAll();
+            lock.unlock();
         }
     }
 }

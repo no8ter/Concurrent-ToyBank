@@ -1,19 +1,26 @@
 package ru.rsf.Concurrent.ToyBank;
 
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-
 public class TaskManager implements Runnable{
     Bank bank = Bank.getInstance();
     FrontSystem fs = FrontSystem.getInstance();
-    Condition condition = FrontSystem.getInputCodition();
-    Lock lock = FrontSystem.getLock();
 
-    private Task currentTask = null;
+    private boolean stop;
+    private final String name;
+
+    public TaskManager(String name) {
+        this.name = name;
+    }
 
     @Override
     public void run(){
-        lock.lock();
-        // WIP
+        while (!stop) {
+            Task currentTask = fs.pullFromQueue();
+            System.out.println(name+": Получена заявка на обработку по клиенту - "+ currentTask.owner);
+            bank.runTask(currentTask, name);
+        }
+    }
+
+    public void stop(){
+        stop = true;
     }
 }
